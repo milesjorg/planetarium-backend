@@ -1,9 +1,18 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional
 from skyfield.api import load
 from datetime import datetime
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Load once
 planets = load('de421.bsp')
@@ -23,47 +32,47 @@ skyfield_names = {
 
 PLANETS = {
     "mercury": {
-        "semi_major_axis_km": 57909227,
+        "semi_major_axis_au": 0.387098,
         "eccentricity": 0.2056,
         "orbital_period_days": 87.97
     },
     "venus": {
-        "semi_major_axis_km": 108209475,
+        "semi_major_axis_au": 0.723332,
         "eccentricity": 0.0067,
         "orbital_period_days": 224.70
     },
     "earth": {
-        "semi_major_axis_km": 149598262,
+        "semi_major_axis_au": 1.000003,
         "eccentricity": 0.0167,
         "orbital_period_days": 365.25
     },
     "mars": {
-        "semi_major_axis_km": 227943824,
+        "semi_major_axis_au": 1.523679,
         "eccentricity": 0.0934,
         "orbital_period_days": 686.98
     },
     "jupiter": {
-        "semi_major_axis_km": 778340821,
+        "semi_major_axis_au": 5.202603,
         "eccentricity": 0.0489,
         "orbital_period_days": 4332.59
     },
     "saturn": {
-        "semi_major_axis_km": 1426666422,
+        "semi_major_axis_au": 9.537070,
         "eccentricity": 0.0565,
         "orbital_period_days": 10759.22
     },
     "uranus": {
-        "semi_major_axis_km": 2870658186,
+        "semi_major_axis_au": 19.191263,
         "eccentricity": 0.0463,
         "orbital_period_days": 30688.5
     },
     "neptune": {
-        "semi_major_axis_km": 4498396441,
+        "semi_major_axis_au": 30.068963,
         "eccentricity": 0.0095,
         "orbital_period_days": 60182
     },
     "pluto": {
-        "semi_major_axis_km": 5906440628,
+        "semi_major_axis_au": 39.481686,
         "eccentricity": 0.2488,
         "orbital_period_days": 90560
     }
@@ -124,4 +133,3 @@ def get_all_planet_positions(time: Optional[str] = None):
         "timestamp": t.utc_iso(),
         "planets": output
     }
-
