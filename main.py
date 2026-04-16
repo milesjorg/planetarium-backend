@@ -15,7 +15,7 @@ app.add_middleware(
 )
 
 # Load once
-planets = load('de421.bsp')
+planets = load('de102.bsp')
 ts = load.timescale()
 
 skyfield_names = {
@@ -104,32 +104,56 @@ def get_planet_orbit(name: str):
     if name not in PLANETS:
         return {"error": "Planet not found"}
 
-    return PLANETS[name]    
+    return PLANETS[name]
 
 
 @app.get("/planets")
-def get_all_planet_positions(time: Optional[str] = None):
-    if time:
-        try:
-            dt = datetime.fromisoformat(time)
-        except ValueError:
-            return {"error": "time must be an ISO-8601 string, e.g. 2023-01-02T15:04:05"}
-        t = ts.from_datetime(dt)
-    else:
-        t = ts.now()
-    output = []
+def get_all_planet_positions(time: Optional[str] = None, julian_date: Optional[float] = None):
+    """
+    Get positions of all planets at a specific time.
+    
+    Parameters:
+    - time: ISO-8601 datetime string (e.g., "2023-01-02T15:04:05")
+    - julian_date: Julian Date as float (e.g., 2451545.5)
+    
+    If both provided, julian_date takes precedence.
+    If neither provided, uses current time.
+    
+    Note: de102.bsp covers JED 1206160.5 (-1410 APR 16) to JED 2817872.5 (3002 DEC 22). Please use a date within this range.
+    """
+    try:
+        if julian_date is not None:
+            # Create time from Julian Date
+            t = ts.tt_jd(julian_date)
+        elif time:
+            try:
+                dt = datetime.fromisoformat(time)
+            except ValueError:
+                return {"error": "time must be an ISO-8601 string, e.g. 2023-01-02T15:04:05"}
+            t = ts.from_datetime(dt)
+        else:
+            t = ts.now()
 
-    for key, skyfield_name in skyfield_names.items():
-        planet = planets[skyfield_name]
-        position = planet.at(t).position.au
-        output.append({
-            "planet": key,
-            "x": position[0],
-            "y": position[1],
-            "z": position[2]
-        })
+        output = []
 
-    return {
-        "timestamp": t.utc_iso(),
-        "planets": output
-    }
+        for key, skyfield_name in skyfield_names.items():
+            planet = planets[skyfield_name]
+            position = planet.at(t).position.au
+            output.append({
+                "planet": key,
+                "x": position[0],
+                "y": position[1],
+                "z": position[2]
+            })
+
+        return {
+            "timestamp": t.utc_iso(),
+            "julian_date": t.tt,
+            "planets": output
+        }
+    except Exception as e:
+        return {
+            "error": f"Failed to calculate positions: {str(e)}",
+            "hint": "de102.bsp covers JED 1206160.5 (-1410 APR 16) to JED 2817872.5 (3002 DEC 22). Please use a date within this range.",
+            "details": str(type(e).__name__)
+        }
